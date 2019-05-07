@@ -28,72 +28,60 @@ item will be filled in by the filter function and it represents each item from t
 const isSearched = (searchTerm) => (item) =>
   item.title.toLowerCase().includes(searchTerm.toLowerCase());
 
-
-function Button({
-  onClick,
-  className = "", //this is a default value applied if the parent componenet didnt pass a className
-  children
-}) {
-
-  return (
-    <button
-      onClick={onClick}
-      className={className}
-      type='button'
-    >
-      {children}
-    </button>
-  );
-}
+//className has a default value 
+//its applied if the parent componenet didnt pass a className
+const Button = ({onClick, className = "", children}) =>  
+  <button
+    onClick={onClick}
+    className={className}
+    type='button'
+  >
+    {children}
+  </button>
 
 
 
-function Search({ value, onChange, children }) {
 
-  return (
-    <form>
-      {children}
-      <input
-        type='text'
-        value={value}
-        onChange={onChange}
-      />
-    </form>
-  );
-}
+
+const Search = ({ value, onChange, children }) => 
+  <form>
+    {children}
+    <input
+      type='text'
+      value={value}
+      onChange={onChange}
+    />
+  </form>
 
 
 
-function Table({ pattern, list, onDismiss }) {
 
-  return (
-    <div>
-      {list.filter(isSearched(pattern)).map(item => {
-        // onMyClick is not attached to 'this'
-        // we cannot just set the click listener to this.onDismiss(item.objectId) because this will
-        // execute the function right away and only the first time the componenet is rendered.
-        // instead we wrap it in a lambda expressions, this wont be invoked right away.
-        const onMyClick = () => onDismiss(item.objectID);
-        // this return is for the map method
-        return (
-          <div key={item.objectID}>
-            <span><a href={item.url}>{item.title}</a></span>
-            <span>{item.author}</span>
-            <span>{item.num_comments}</span>
-            <span>{item.points}</span>
-            <span>
-              <Button
-                onClick={onMyClick}
-              >
-                Dismiss
-              </Button>
-            </span>
-          </div>
-        )
-      })}
-    </div>
-  );
-}
+const Table = ({ pattern, list, onDismiss }) => 
+  <div>
+    {list.filter(isSearched(pattern)).map(item => {
+      // onMyClick is not attached to 'this'
+      // we cannot just set the click listener to this.onDismiss(item.objectId) because this will
+      // execute the function right away and only the first time the componenet is rendered.
+      // instead we wrap it in a lambda expressions, this wont be invoked right away.
+      const onMyClick = () => onDismiss(item.objectID);
+      // this return is for the map method
+      return (
+        <div key={item.objectID}>
+          <span><a href={item.url}>{item.title}</a></span>
+          <span>{item.author}</span>
+          <span>{item.num_comments}</span>
+          <span>{item.points}</span>
+          <span>
+            <Button
+              onClick={onMyClick}
+            >
+              Dismiss
+            </Button>
+          </span>
+        </div>
+      )
+    })}
+  </div>
 
 class App extends Component {
 
