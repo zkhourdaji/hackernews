@@ -29,15 +29,37 @@ const isSearched = (searchTerm) => (item) =>
   item.title.toLowerCase().includes(searchTerm.toLowerCase());
 
 
+class Button extends Component {
+
+  render(){
+    const{
+      onClick, 
+      className = "", //this is a default value applied if the parent componenet didnt pass a className
+      children
+    } = this.props;
+    
+    return(
+      <button
+        onClick={onClick}
+        className={className}
+        type='button'
+      >
+        {children}
+      </button>
+    );
+  }
+}
+
 
 class Search extends Component {
 
   render (){
 
-    const {value, onChange} = this.props; 
+    const {value, onChange, children} = this.props; 
 
     return (
       <form>
+        {children}
       <input 
         type='text'
         value={value}
@@ -69,12 +91,11 @@ class Table extends Component {
                 <span>{item.num_comments}</span>
                 <span>{item.points}</span>
                 <span>
-                  <button
+                  <Button
                     onClick={onMyClick}
-                    type="button"
                   >
                     Dismiss
-                </button>
+                  </Button>
                 </span>
               </div>
             )
@@ -120,19 +141,19 @@ class App extends Component {
       <div className="App">
         <h2>{greeting}</h2>
         <p>{name}</p>
+        
         <Search 
           value={searchTerm}
           onChange={this.onSearchChange}
-        />
+        >
+        {/*This will be passed in as props.children available in the Search Componenet*/}
+        Search Component
+        </Search>
         <Table 
           list={list}
           pattern={searchTerm}
           onDismiss={this.onDismiss}
         />
- 
-        {
-          
-        }
       </div>
     )
   }
