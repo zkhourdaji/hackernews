@@ -29,12 +29,11 @@ const isSearched = (searchTerm) => (item) =>
   item.title.toLowerCase().includes(searchTerm.toLowerCase());
 
 
-function Button(props) {
-  const {
-    onClick,
-    className = "", //this is a default value applied if the parent componenet didnt pass a className
-    children
-  } = props;
+function Button({
+  onClick,
+  className = "", //this is a default value applied if the parent componenet didnt pass a className
+  children
+}) {
 
   return (
     <button
@@ -49,9 +48,7 @@ function Button(props) {
 
 
 
-function Search(props) {
-
-  const { value, onChange, children } = props;
+function Search({ value, onChange, children }) {
 
   return (
     <form>
@@ -67,9 +64,7 @@ function Search(props) {
 
 
 
-function Table(props) {
-
-  const { pattern, list, onDismiss } = props;
+function Table({ pattern, list, onDismiss }) {
 
   return (
     <div>
