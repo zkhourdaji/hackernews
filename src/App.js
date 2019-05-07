@@ -2,11 +2,16 @@ import React, { Component } from 'react';
 import './App.css';
 
 const DEFAULT_QUERY = 'redux';
+const DEFAULT_HPP = '100';
+
+
 const PATH_BASE = 'https://hn.algolia.com/api/v1';
 const PATH_SEARCH = '/search';
 const PARAM_SEARCH = 'query=';
+const PARAM_PAGE = 'page=';
+const PARAM_HPP = 'hitsPerPage=';
 
-const url = `${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${DEFAULT_QUERY}`
+const url = `${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${DEFAULT_QUERY}&${PARAM_PAGE}`
 
 const list = [
   {
@@ -32,6 +37,7 @@ This function is used to return a function to pass it to the filter method when 
 user types in the text box. The value of the text box is passed to isSearchTerm as searchTerm
 item will be filled in by the filter function and it represents each item from the list above.
 */
+// this is no longer used.
 const isSearched = (searchTerm) => (item) =>
   item.title.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -124,9 +130,23 @@ class App extends Component {
   }
 
   // this method is used after we get a json response from the api call
+  // result is the json result from the api call
   setSearchTopStories(result){
+
+    const {hits, page} = result;
+    // if this is the very first page, then oldHits is an empty array
+    // otherwise oldHits will contain the history of the hits
+    const oldHits = page !== 0 ? this.state.result.hits:[];
+    // concatenate the old hits with the new hits
+    const updatedHits = [...oldHits, ...hits];
+
     // this is a shortcut for {result:result}
-    this.setState({result});
+    this.setState({
+      result: {
+        hits: updatedHits, 
+        page
+      }
+    });
   }
 
   /*
@@ -150,8 +170,8 @@ class App extends Component {
     event.preventDefault();
   }
 
-  fetchSearchTopStories(searchTerm){
-    fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}`)
+  fetchSearchTopStories(searchTerm, page = 0){
+    fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${PARAM_HPP}${DEFAULT_HPP}`)
     .then(res => res.json())
     // setSearchTopStories will update the state causing a rerender
     .then(result => this.setSearchTopStories(result))
@@ -167,9 +187,9 @@ class App extends Component {
   render() {
     // this is ES6 destructing syntax.
     const { searchTerm, greeting, name, result } = this.state;
-    if (!result)
-      return null;
-
+    // page will be the page number if result is not null
+    // otherwise default to 0 (this is for the first api call)
+    const page = (result && result.page) || 0;
     return (
       <div className="page">
         <div className='interactions'>
@@ -193,7 +213,12 @@ class App extends Component {
           onDismiss={this.onDismiss}
         />
         }
-      
+        {/* pagination */}
+        <div className='interactions'>
+          <Button onClick={() => this.fetchSearchTopStories(searchTerm, page+1)}>
+            More
+          </Button>
+        </div>
       </div>
     )
   }
