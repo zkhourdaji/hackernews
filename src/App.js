@@ -30,7 +30,7 @@ const isSearched = (searchTerm) => (item) =>
 
 //className has a default value 
 //its applied if the parent componenet didnt pass a className
-const Button = ({onClick, className = "", children}) =>  
+const Button = ({ onClick, className = "", children }) =>
   <button
     onClick={onClick}
     className={className}
@@ -39,11 +39,7 @@ const Button = ({onClick, className = "", children}) =>
     {children}
   </button>
 
-
-
-
-
-const Search = ({ value, onChange, children }) => 
+const Search = ({ value, onChange, children }) =>
   <form>
     {children}
     <input
@@ -53,11 +49,12 @@ const Search = ({ value, onChange, children }) =>
     />
   </form>
 
+const largeColumn = {width: '40%'};
+const midColumn = {width: '30%'};
+const smallColumn = {width:'10%'};
 
-
-
-const Table = ({ pattern, list, onDismiss }) => 
-  <div>
+const Table = ({ pattern, list, onDismiss }) =>
+  <div className='table'>
     {list.filter(isSearched(pattern)).map(item => {
       // onMyClick is not attached to 'this'
       // we cannot just set the click listener to this.onDismiss(item.objectId) because this will
@@ -66,18 +63,29 @@ const Table = ({ pattern, list, onDismiss }) =>
       const onMyClick = () => onDismiss(item.objectID);
       // this return is for the map method
       return (
-        <div key={item.objectID}>
-          <span><a href={item.url}>{item.title}</a></span>
-          <span>{item.author}</span>
-          <span>{item.num_comments}</span>
-          <span>{item.points}</span>
-          <span>
+        <div key={item.objectID} className='table-row'>
+          {/*The style attribute is a little bit different than html. Here is a javascript object */}
+          <span style={largeColumn}>
+            <a href={item.url}>{item.title}</a>
+          </span>
+          <span style={midColumn}>
+            {item.author}
+          </span>
+          <span style={smallColumn}>
+            {item.num_comments}
+          </span>
+          <span style={smallColumn}>
+            {item.points}
+          </span>
+          <span style={smallColumn}>
             <Button
-              onClick={onMyClick}
+              onClick={() => onDismiss(item.objectID)}
+              className="button-inline"
             >
               Dismiss
-            </Button>
+          </Button>
           </span>
+
         </div>
       )
     })}
@@ -109,24 +117,24 @@ class App extends Component {
     this.setState({ searchTerm: event.target.value });
   }
 
-
   render() {
-
     // this is ES6 destructing syntax.
     const { searchTerm, greeting, name, list } = this.state;
 
     return (
-      <div className="App">
-        <h2>{greeting}</h2>
-        <p>{name}</p>
+      <div className="page">
+        <div className='interactions'>
+          <h2>{greeting}</h2>
+          <p>{name}</p>
 
-        <Search
-          value={searchTerm}
-          onChange={this.onSearchChange}
-        >
-          {/*This will be passed in as props.children available in the Search Componenet*/}
-          Search Component
+          <Search
+            value={searchTerm}
+            onChange={this.onSearchChange}
+          >
+            {/*This will be passed in as props.children available in the Search Componenet*/}
+            Search Component
         </Search>
+        </div>
         <Table
           list={list}
           pattern={searchTerm}
