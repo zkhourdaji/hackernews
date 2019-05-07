@@ -46,23 +46,29 @@ const Button = ({ onClick, className = "", children }) =>
     {children}
   </button>
 
-const Search = ({ value, onChange, children }) =>
-  <form>
+const Search = ({ 
+  value, 
+  onChange,
+  onSubmit, 
+  children 
+}) =>
+  <form onSubmit={onSubmit}>
     {children}
     <input
       type='text'
       value={value}
       onChange={onChange}
     />
+    <button>Search</button>
   </form>
 
 const largeColumn = {width: '40%'};
 const midColumn = {width: '30%'};
 const smallColumn = {width:'10%'};
 
-const Table = ({ pattern, list, onDismiss }) =>
+const Table = ({ list, onDismiss }) =>
   <div className='table'>
-    {list.filter(isSearched(pattern)).map(item => {
+    {list.map(item => {
       // onMyClick is not attached to 'this'
       // we cannot just set the click listener to this.onDismiss(item.objectId) because this will
       // execute the function right away and only the first time the componenet is rendered.
@@ -113,6 +119,8 @@ class App extends Component {
     this.onDismiss = this.onDismiss.bind(this);
     this.onSearchChange = this.onSearchChange.bind(this);
     this.setSearchTopStories = this.setSearchTopStories.bind(this);
+    this.onSearchSubmit = this.onSearchSubmit.bind(this);
+    this.fetchSearchTopStories = this.fetchSearchTopStories.bind(this);
   }
 
   // this method is used after we get a json response from the api call
@@ -135,16 +143,25 @@ class App extends Component {
   onSearchChange(event) {
     this.setState({ searchTerm: event.target.value });
   }
+  
+  onSearchSubmit(event){
+    const{searchTerm} = this.state;
+    this.fetchSearchTopStories(searchTerm);
+    event.preventDefault();
+  }
+
+  fetchSearchTopStories(searchTerm){
+    fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}`)
+    .then(res => res.json())
+    // setSearchTopStories will update the state causing a rerender
+    .then(result => this.setSearchTopStories(result))
+    .catch(error => error);
+  }
 
   componentDidMount(){
     // destructuring sytax
     const{searchTerm} = this.state;
-
-    fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}`)
-      .then(res => res.json())
-      // setSearchTopStories will update the state causing a rerender
-      .then(result => this.setSearchTopStories(result))
-      .catch(error => error);
+    this.fetchSearchTopStories(searchTerm);
   }
 
   render() {
@@ -162,6 +179,7 @@ class App extends Component {
           <Search
             value={searchTerm}
             onChange={this.onSearchChange}
+            onSubmit={this.onSearchSubmit}
           >
             {/*This will be passed in as props.children available in the Search Componenet*/}
             Search Component
@@ -172,7 +190,6 @@ class App extends Component {
           result && 
           <Table
           list={result.hits}
-          pattern={searchTerm}
           onDismiss={this.onDismiss}
         />
         }
