@@ -1,6 +1,13 @@
 import React, { Component } from 'react';
 import './App.css';
 
+const DEFAULT_QUERY = 'redux';
+const PATH_BASE = 'https://hn.algolia.com/api/v1';
+const PATH_SEARCH = '/search';
+const PARAM_SEARCH = 'query=';
+
+const url = `${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${DEFAULT_QUERY}`
+
 const list = [
   {
     title: 'React',
@@ -61,6 +68,7 @@ const Table = ({ pattern, list, onDismiss }) =>
       // execute the function right away and only the first time the componenet is rendered.
       // instead we wrap it in a lambda expressions, this wont be invoked right away.
       const onMyClick = () => onDismiss(item.objectID);
+      
       // this return is for the map method
       return (
         <div key={item.objectID} className='table-row'>
@@ -79,7 +87,7 @@ const Table = ({ pattern, list, onDismiss }) =>
           </span>
           <span style={smallColumn}>
             <Button
-              onClick={() => onDismiss(item.objectID)}
+              onClick={onMyClick}
               className="button-inline"
             >
               Dismiss
@@ -96,30 +104,54 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      list,
+      list: [],
       name: 'zafer',
       greeting: 'Hello world!',
-      searchTerm: ''
+      searchTerm: DEFAULT_QUERY,
+      result:null
     };
     this.onDismiss = this.onDismiss.bind(this);
     this.onSearchChange = this.onSearchChange.bind(this);
+    this.setSearchTopStories = this.setSearchTopStories.bind(this);
+  }
+
+  // this method is used after we get a json response from the api call
+  setSearchTopStories(result){
+    // this is a shortcut for {result:result}
+    this.setState({result});
   }
 
   /*
   This function is called when the user clicks a dismiss button on one of the items.
   */
   onDismiss(id) {
-    const updatedList = this.state.list.filter(item => item.objectID !== id);
-    this.setState({ list: updatedList });
+    const updatedHits = this.state.result.hits.filter(item => item.objectID !== id);
+    this.setState({ 
+     // result: Object.assign({}, this.state.result, {hits: updatedHits})
+     result: {...this.state.result, hits: updatedHits}
+    });
   }
 
   onSearchChange(event) {
     this.setState({ searchTerm: event.target.value });
   }
 
+  componentDidMount(){
+    // destructuring sytax
+    const{searchTerm} = this.state;
+
+    fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}`)
+      .then(res => res.json())
+      // setSearchTopStories will update the state causing a rerender
+      .then(result => this.setSearchTopStories(result))
+      .catch(error => error);
+  }
+
   render() {
     // this is ES6 destructing syntax.
-    const { searchTerm, greeting, name, list } = this.state;
+    const { searchTerm, greeting, name, result } = this.state;
+    if (!result)
+      return null;
 
     return (
       <div className="page">
@@ -135,11 +167,16 @@ class App extends Component {
             Search Component
         </Search>
         </div>
-        <Table
-          list={list}
+        {
+          // wow this is crazy shit right here
+          result && 
+          <Table
+          list={result.hits}
           pattern={searchTerm}
           onDismiss={this.onDismiss}
         />
+        }
+      
       </div>
     )
   }
