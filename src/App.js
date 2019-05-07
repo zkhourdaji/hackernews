@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import axios from 'axios';
 import './App.css';
 
 const DEFAULT_QUERY = 'redux';
@@ -10,15 +11,6 @@ const PATH_SEARCH = '/search';
 const PARAM_SEARCH = 'query=';
 const PARAM_PAGE = 'page=';
 const PARAM_HPP = 'hitsPerPage=';
-
-/*
-This function is used to return a function to pass it to the filter method when the 
-user types in the text box. The value of the text box is passed to isSearchTerm as searchTerm
-item will be filled in by the filter function and it represents each item from the list above.
-*/
-// this is no longer used.
-const isSearched = (searchTerm) => (item) =>
-  item.title.toLowerCase().includes(searchTerm.toLowerCase());
 
 //className has a default value 
 //its applied if the parent componenet didnt pass a className
@@ -95,14 +87,15 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      name: 'zafer',
-      greeting: 'Hello world!',
       // search term changes as use types in the text box
       searchTerm: DEFAULT_QUERY,
       results: null,
       // searchKey is for caching results, the key will be what the user searched on
-      searchKey: ''
+      searchKey: '',
+
     };
+
+    // make sure to bind all methods
     this.onDismiss = this.onDismiss.bind(this);
     this.onSearchChange = this.onSearchChange.bind(this);
     this.setSearchTopStories = this.setSearchTopStories.bind(this);
@@ -111,14 +104,17 @@ class App extends Component {
     this.needsToSearchTopStories = this.needsToSearchTopStories.bind(this);
   }
 
-  needsToSearchTopStories(searchTerm){
+  // this returns true if the user is searching for the searchTerm for the first time
+  // meaning that we didnt cache the results
+  // if we already have the results cahced, this will return false
+  needsToSearchTopStories(searchTerm) {
     return !this.state.results[searchTerm];
   }
 
   // this method is used after we get a json response from the api call
   // result is the json result from the api call
   setSearchTopStories(result) {
-
+    // hits is an array of articles
     const { hits, page } = result;
     const { searchKey, results } = this.state;
 
@@ -141,16 +137,16 @@ class App extends Component {
   This function is called when the user clicks a dismiss button on one of the items.
   */
   onDismiss(id) {
-    const {searchKey, results} = this.state;
-    const {hits, page} = results[searchKey];
+    const { searchKey, results } = this.state;
+    const { hits, page } = results[searchKey];
     const isNotId = item => item.objectID !== id;
 
     const updatedHits = hits.filter(isNotId);
     this.setState({
-      results:{
+      results: {
         ...results,
-        [searchKey]:{
-          hits:updatedHits,
+        [searchKey]: {
+          hits: updatedHits,
           page
         }
       }
@@ -168,18 +164,17 @@ class App extends Component {
     const { searchTerm } = this.state;
     // we keep track of the search key for caching the results to the state
     this.setState({ searchKey: searchTerm });
-    if (this.needsToSearchTopStories(searchTerm)){
+    if (this.needsToSearchTopStories(searchTerm)) {
       this.fetchSearchTopStories(searchTerm);
     }
     event.preventDefault();
   }
 
   fetchSearchTopStories(searchTerm, page = 0) {
-    fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${PARAM_HPP}${DEFAULT_HPP}`)
-      .then(res => res.json())
+    axios(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${PARAM_HPP}${DEFAULT_HPP}`)
       // setSearchTopStories will update the state causing a rerender
-      .then(result => this.setSearchTopStories(result))
-      .catch(error => error);
+      .then(result => this.setSearchTopStories(result.data))
+      .catch(error => this.setState({ error }));
   }
 
   componentDidMount() {
@@ -191,7 +186,13 @@ class App extends Component {
 
   render() {
     // this is ES6 destructing syntax.
-    const { searchTerm, greeting, name, results, searchKey } = this.state;
+    const {
+      searchTerm,
+      results,
+      searchKey,
+      error
+    } = this.state;
+
     // page will be the page number if result is not null
     // otherwise default to 0 (this is for the first api call)
     const page = (results && results[searchKey] && results[searchKey].page) || 0;
@@ -199,22 +200,23 @@ class App extends Component {
     return (
       <div className="page">
         <div className='interactions'>
-          <h2>{greeting}</h2>
-          <p>{name}</p>
-
           <Search
             value={searchTerm}
             onChange={this.onSearchChange}
             onSubmit={this.onSearchSubmit}
-          >
-            {/*This will be passed in as props.children available in the Search Componenet*/}
-            Search Component
-        </Search>
+          />
         </div>
-        <Table
-          list={list}
-          onDismiss={this.onDismiss}
-        />
+        {
+          error ? 
+          <div className='interaction'>
+            <p>Something went wrong {error.toString()}</p>
+          </div> :
+             <Table
+             list={list}
+             onDismiss={this.onDismiss}
+           />
+        }
+     
         {/* pagination */}
         <div className='interactions'>
           <Button onClick={() => this.fetchSearchTopStories(searchTerm, page + 1)}>
