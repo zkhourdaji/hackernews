@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import axios from 'axios';
+import { sortBy } from 'lodash';
 import PropTypes from 'prop-types';
 import './App.css';
+import classNames from 'classnames';
 
 const DEFAULT_QUERY = 'redux';
 const DEFAULT_HPP = '100';
@@ -78,45 +80,95 @@ const largeColumn = { width: '40%' };
 const midColumn = { width: '30%' };
 const smallColumn = { width: '10%' };
 
-const Table = ({ list, onDismiss }) =>
-  <div className='table'>
-    {list.map(item => {
-      // onMyClick is not attached to 'this'
-      // we cannot just set the click listener to this.onDismiss(item.objectId) because this will
-      // execute the function right away and only the first time the componenet is rendered.
-      // instead we wrap it in a lambda expressions, this wont be invoked right away.
-      const onMyClick = () => onDismiss(item.objectID);
+const Table = ({
+  list,
+  sortKey,
+  onSort,
+  onDismiss,
+  isSortReverse }) => {
+  const sortedList = SORTS[sortKey](list);
+  const reverseSortedList = isSortReverse ? sortedList.reverse() : sortedList;
+  return (
+    <div className='table'>
+      <div className='table-header'>
+        <span style={{ width: '40%' }}>
+          <Sort
+            sortKey={'TITLE'}
+            onSort={onSort}
+            activeSortKey={sortKey}
+          >
+            Title
+          </Sort>
+        </span>
+        <span style={{ width: '30%' }}>
+          <Sort
+            sortKey={'AUTHOR'}
+            onSort={onSort}
+            activeSortKey={sortKey}
+          >
+            Author
+          </Sort>
+        </span>
+        <span style={{ width: '10%' }}>
+          <Sort
+            sortKey={'COMMENTS'}
+            onSort={onSort}
+            activeSortKey={sortKey}
+          >
+            Comments
+          </Sort>
+        </span>
+        <span style={{ width: '10%' }}>
+          <Sort
+            sortKey={'POINTS'}
+            onSort={onSort}
+            activeSortKey={sortKey}
+          >
+            Points
+          </Sort>
+        </span>
+        <span style={{ width: '10%' }}>
+          Archive
+        </span>
+      </div>
 
-      // this return is for the map method
-      return (
-        <div key={item.objectID} className='table-row'>
-          {/*The style attribute is a little bit different than html. Here is a javascript object */}
-          <span style={largeColumn}>
-            <a href={item.url}>{item.title}</a>
-          </span>
-          <span style={midColumn}>
-            {item.author}
-          </span>
-          <span style={smallColumn}>
-            {item.num_comments}
-          </span>
-          <span style={smallColumn}>
-            {item.points}
-          </span>
-          <span style={smallColumn}>
-            <Button
-              onClick={onMyClick}
-              className="button-inline"
-            >
-              Dismiss
+      {reverseSortedList.map(item => {
+        // onMyClick is not attached to 'this'
+        // we cannot just set the click listener to this.onDismiss(item.objectId) because this will
+        // execute the function right away and only the first time the componenet is rendered.
+        // instead we wrap it in a lambda expressions, this wont be invoked right away.
+        const onMyClick = () => onDismiss(item.objectID);
+        // this return is for the map method
+        return (
+          <div key={item.objectID} className='table-row'>
+            {/*The style attribute is a little bit different than html. Here is a javascript object */}
+            <span style={largeColumn}>
+              <a href={item.url}>{item.title}</a>
+            </span>
+            <span style={midColumn}>
+              {item.author}
+            </span>
+            <span style={smallColumn}>
+              {item.num_comments}
+            </span>
+            <span style={smallColumn}>
+              {item.points}
+            </span>
+            <span style={smallColumn}>
+              <Button
+                onClick={onMyClick}
+                className="button-inline"
+              >
+                Dismiss
           </Button>
-          </span>
+            </span>
 
-        </div>
-      )
-    })}
-  </div>
-
+          </div>
+        )
+      })}
+    </div>
+  );
+}
 Table.propTypes = {
   list: PropTypes.arrayOf(
     PropTypes.shape({
@@ -139,6 +191,34 @@ const withLoading = (Component) => (props) =>
 
 const ButtonWithLoading = withLoading(Button);
 
+const SORTS = {
+  NONE: list => list,
+  TITLE: list => sortBy(list, 'title'),
+  AUTHOR: list => sortBy(list, 'author'),
+  COMMENTS: list => sortBy(list, 'num_comments').reverse(),
+  POINTS: list => sortBy(list, 'points').reverse()
+};
+
+const Sort = ({
+  sortKey,
+  onSort,
+  activeSortKey,
+  children }) => {
+
+  const sortClass = classNames(
+    'button-inline',
+    { 'button-active': sortKey === activeSortKey }
+  );
+  return (
+    <Button
+      onClick={() => onSort(sortKey)}
+      className={sortClass}
+    >
+      {children}
+    </Button>
+  );
+
+}
 class App extends Component {
 
   constructor(props) {
@@ -151,7 +231,9 @@ class App extends Component {
       results: null,
       // searchKey is for caching results, the key will be what the user searched on
       searchKey: '',
-      isLoading: false
+      isLoading: false,
+      sortKey: 'NONE',
+      isSortReverse: false
     };
 
     // make sure to bind all methods
@@ -161,6 +243,12 @@ class App extends Component {
     this.onSearchSubmit = this.onSearchSubmit.bind(this);
     this.fetchSearchTopStories = this.fetchSearchTopStories.bind(this);
     this.needsToSearchTopStories = this.needsToSearchTopStories.bind(this);
+    this.onSort = this.onSort.bind(this);
+  }
+
+  onSort(sortKey) {
+    const isSortReverse = this.state.sortKey === sortKey && !this.state.isSortReverse;
+    this.setState({ sortKey, isSortReverse });
   }
 
   // this returns true if the user is searching for the searchTerm for the first time
@@ -255,7 +343,9 @@ class App extends Component {
       results,
       searchKey,
       error,
-      isLoading
+      isLoading,
+      sortKey,
+      isSortReverse
     } = this.state;
 
     // page will be the page number if result is not null
@@ -278,7 +368,10 @@ class App extends Component {
             </div> :
             <Table
               list={list}
+              sortKey={sortKey}
+              onSort={this.onSort}
               onDismiss={this.onDismiss}
+              isSortReverse={isSortReverse}
             />
         }
 

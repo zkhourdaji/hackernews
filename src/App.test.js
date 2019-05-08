@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import renderer from 'react-test-renderer';
-import Enzyme, {shallow} from 'enzyme';
+import Enzyme, { shallow } from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
-import App, {Search, Button, Table} from './App';
+import App, { Search, Button, Table } from './App';
 
-Enzyme.configure({adapter: new Adapter()});
+Enzyme.configure({ adapter: new Adapter() });
 
 describe('App', () => {
   it('renders without crashing', () => {
@@ -47,7 +47,7 @@ describe('Button', () => {
     const tree = component.toJSON();
     expect(tree).toMatchSnapshot();
   });
-  it ('has one button child', () => {
+  it('has one button child', () => {
     const wrapper = shallow(<Button>Button</Button>);
     expect(wrapper.children().length).toBe(1);
   });
@@ -59,17 +59,19 @@ describe('Table', () => {
       { title: '1', author: '1', num_comments: 1, points: 2, objectID: 'y' },
       { title: '2', author: '2', num_comments: 1, points: 2, objectID: 'z' },
     ],
+    sortKey: 'TITLE',
+    isSorteReverse: false
   };
   it('renders without crashing', () => {
     const div = document.createElement('div');
-    ReactDOM.render(<Table {...props}/>, div);
+    ReactDOM.render(<Table {...props} />, div);
   });
   test('has a valid snapshot', () => {
     const component = renderer.create(<Table {...props} />);
     const tree = component.toJSON();
     expect(tree).toMatchSnapshot();
   });
-  it ('shows two items in list', () => {
+  it('shows two items in list', () => {
     // shallow renders the componenet without its child componenet
     const elemenet = shallow(<Table {...props} />);
     expect(elemenet.find('.table-row').length).toBe(2);
