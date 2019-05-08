@@ -34,21 +34,37 @@ Button.defaultProps = {
   className: ''
 };
 
-const Search = ({
-  value,
-  onChange,
-  onSubmit,
-  children
-}) =>
-  <form onSubmit={onSubmit}>
-    {children}
-    <input
-      type='text'
-      value={value}
-      onChange={onChange}
-    />
-    <button>Search</button>
-  </form>
+class Search extends Component {
+
+  componentDidMount(){
+    if (this.input){
+      this.input.focus();
+    }
+  }
+
+  render() {
+    const {
+      value,
+      onChange,
+      onSubmit,
+      children
+    } = this.props
+    return (
+      <form onSubmit={onSubmit}>
+        {children}
+        <input
+          type='text'
+          value={value}
+          onChange={onChange}
+          ref = {el => this.input = el}
+        />
+        <button>Search</button>
+      </form>
+    );
+  }
+}
+
+
 
 Search.propTypes = {
   value: PropTypes.string,
@@ -121,10 +137,11 @@ class App extends Component {
     this.state = {
       // search term changes as use types in the text box
       searchTerm: DEFAULT_QUERY,
+      // results are cahced with the keys being what the user searched on
+      // the value object will contain an array of hits and a page number
       results: null,
       // searchKey is for caching results, the key will be what the user searched on
       searchKey: '',
-
     };
 
     // make sure to bind all methods
@@ -137,7 +154,7 @@ class App extends Component {
   }
 
   // this returns true if the user is searching for the searchTerm for the first time
-  // meaning that we didnt cache the results
+  // meaning that we dont have cached results
   // if we already have the results cahced, this will return false
   needsToSearchTopStories(searchTerm) {
     return !this.state.results[searchTerm];
@@ -149,13 +166,16 @@ class App extends Component {
     // hits is an array of articles
     const { hits, page } = result;
     const { searchKey, results } = this.state;
-
+    // old hits will either be empty array if we dont have cached results,
+    // or it will contain the hits from the cahced results
     const oldHits = results && results[searchKey] ? results[searchKey].hits : [];
     // concatenate the old hits with the new hits
     const updatedHits = [...oldHits, ...hits];
 
     this.setState({
       results: {
+        // this line right here does the caching
+        // without it, we would lose the old results, since the top level results object will be the new results
         ...results,
         [searchKey]: {
           hits: updatedHits,
@@ -239,16 +259,16 @@ class App extends Component {
           />
         </div>
         {
-          error ? 
-          <div className='interaction'>
-            <p>Something went wrong {error.toString()}</p>
-          </div> :
-             <Table
-             list={list}
-             onDismiss={this.onDismiss}
-           />
+          error ?
+            <div className='interaction'>
+              <p>Something went wrong {error.toString()}</p>
+            </div> :
+            <Table
+              list={list}
+              onDismiss={this.onDismiss}
+            />
         }
-     
+
         {/* pagination */}
         <div className='interactions'>
           <Button onClick={() => this.fetchSearchTopStories(searchTerm, page + 1)}>
@@ -261,5 +281,4 @@ class App extends Component {
 }
 
 export default App;
-
-export {Button, Search, Table}
+export { Button, Search, Table }
