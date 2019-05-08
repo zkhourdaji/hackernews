@@ -36,8 +36,8 @@ Button.defaultProps = {
 
 class Search extends Component {
 
-  componentDidMount(){
-    if (this.input){
+  componentDidMount() {
+    if (this.input) {
       this.input.focus();
     }
   }
@@ -56,7 +56,7 @@ class Search extends Component {
           type='text'
           value={value}
           onChange={onChange}
-          ref = {el => this.input = el}
+          ref={el => this.input = el}
         />
         <button>Search</button>
       </form>
@@ -130,6 +130,10 @@ Table.propTypes = {
   onDismiss: PropTypes.func.isRequired
 };
 
+
+const Loading = () => <div>Loading...</div>
+
+
 class App extends Component {
 
   constructor(props) {
@@ -142,6 +146,7 @@ class App extends Component {
       results: null,
       // searchKey is for caching results, the key will be what the user searched on
       searchKey: '',
+      isLoading: false
     };
 
     // make sure to bind all methods
@@ -180,7 +185,8 @@ class App extends Component {
         [searchKey]: {
           hits: updatedHits,
           page
-        }
+        },
+        isLoading: false
       }
     });
   }
@@ -223,6 +229,7 @@ class App extends Component {
   }
 
   fetchSearchTopStories(searchTerm, page = 0) {
+    this.setState({ isLoading: true });
     axios(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${PARAM_HPP}${DEFAULT_HPP}`)
       // setSearchTopStories will update the state causing a rerender
       .then(result => this.setSearchTopStories(result.data))
@@ -242,7 +249,8 @@ class App extends Component {
       searchTerm,
       results,
       searchKey,
-      error
+      error,
+      isLoading
     } = this.state;
 
     // page will be the page number if result is not null
@@ -271,9 +279,11 @@ class App extends Component {
 
         {/* pagination */}
         <div className='interactions'>
-          <Button onClick={() => this.fetchSearchTopStories(searchTerm, page + 1)}>
-            More
-          </Button>
+          {isLoading ? <Loading />
+            : <Button onClick={() => this.fetchSearchTopStories(searchTerm, page + 1)}>
+              More
+          </Button>}
+
         </div>
       </div>
     )
